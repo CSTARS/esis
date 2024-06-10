@@ -15,10 +15,20 @@ module.exports = async function(model, req, res) {
    * result contains packageName and stream
    */
   console.log(pkgid, filters, includeMetadata);
-  let result = await model.export(pkgid, filters, includeMetadata);
-  res.set('Content-Disposition', 'attachment; filename="'+result.packageName+'.csv"');
 
-  let output = await csvStringify([result.headers]);
+  let result, output;
+
+
+  try {
+    result = await model.export(pkgid, filters, includeMetadata);
+    output = await csvStringify([result.headers]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send(err.message);
+    return;
+  }
+
+  res.set('Content-Disposition', 'attachment; filename="'+result.packageName+'.csv"');
   res.write(BOM + output);
 
   var dataLength = result.data.length;
